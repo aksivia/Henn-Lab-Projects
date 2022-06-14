@@ -26,13 +26,6 @@ library(rapport)
 GenDX <- read.delim(file="GenDX_updated_7_26_Himba_resolved_reformat.txt")
 Omixon <- read.delim(file="14June2021_Himba_Omixon_HLA_calls.txt")
 
-# tinkering with a simplified idea of isolating sample IDs
-Omixon$Sample
-Omixon$Sample <- str_replace(Omixon$Sample, "(\d*-|\d*_).*", "\\1")
-w <- str_replace(Omixon[923,1], "([0-9]*)[:punct:].*", "\\1")
-
-# GenDX$Sample <- str_replace(GenDX$Sample, "(\d*-|\d*_).*", "\\1")
-
 #Getting rid of excess stuff in the Sample ID's
 GenDX <- separate(GenDX, Sample, c("Sample_ID", "extra"), sep="-")
 GenDX <- separate(GenDX, Sample_ID, c("Sample_ID", "extra"), sep="_")
@@ -124,16 +117,12 @@ while(k<=nrow(P_group)){
 P_group <- filter(P_group, Locus!="null") # removes irrelevant rows
 
 
-# GenDX P group conversion 
-# works
+# GenDX P group conversion -- [works]
 
 GenDX[is.na(GenDX)]<-""
 
 # only comparing the first two fields of the data points to the P_group column to make the search faster
-# make the loci match -- keep letter and make sure it matches P_group$Locus and only search through those p groups
-# locus <- str_replace(GenDX[k,i], ".*\\*([0-9]{2,3}:[^:]{2,3}).*", "\\1:P") # also works
-
-
+# make the loci match so we only search through those p groups
 k<-1
 while(k<=nrow(GenDX)) {
   i<-2;
@@ -155,9 +144,6 @@ while(k<=nrow(GenDX)) {
 
 # to find any exceptions (i.e. data points where the first 2 fields do not match the p group name)
 # only looking at the data points without 'P' at the end and run them through all the P_group$Alleles to find their p group
-
-# make sure first field is matching first field in the exceptions and not the second or third field (especially if call only has 2-3 fields)
-
 k<-1
 while (k<=nrow(GenDX)) {
   i<-2;
@@ -178,9 +164,9 @@ while (k<=nrow(GenDX)) {
 }
 
 
-# Omixon P group conversion
-# only comparing the first 2 fields of the data to the p groups to find a match (quicker method)
+# Omixon P group conversion -- [works]
 
+# only comparing the first 2 fields of the data to the p groups to find a match (quicker method)
 k<-1
 while(k<=nrow(Omixon)) {
   i<-3;

@@ -3,6 +3,20 @@
 # GenDX$Sample_ID <- gsub('[A-Z]*', '', GenDX$Sample_ID) 
 # GenDX$Sample_ID <- gsub('[a-z]*', '', GenDX$Sample_ID)
 
+
+
+# tinkering with a simplified idea of isolating sample IDs
+Omixon$Sample
+Omixon$Sample <- str_replace(Omixon$Sample, "(\d*-|\d*_).*", "\\1")
+w <- str_replace(Omixon[923,1], "([0-9]*)[:punct:].*", "\\1")
+
+# GenDX$Sample <- str_replace(GenDX$Sample, "(\d*-|\d*_).*", "\\1")
+
+# locus <- str_replace(GenDX[k,i], ".*\\*([0-9]{2,3}:[^:]{2,3}).*", "\\1:P") # also works
+# another way to parse locus info using regex
+
+
+
 # if the Sample ID is in the HMB column and not the Sample_ID column 
 # then this moves the Sample ID into the Sample_ID
 k<-1
