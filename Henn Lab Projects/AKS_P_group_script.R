@@ -38,10 +38,8 @@ Omixon <- separate(Omixon, Sample_ID, c("Sample_ID", "extra"), sep="_")
 Omixon <- Omixon[,-2]
 Omixon$Sample_ID <- gsub('[^0-9]', '', Omixon$Sample_ID) 
 Omixon <- select(Omixon, Sample_ID, Allele, HLA.A, HLA.B, HLA.C, HLA.DPA1, HLA.DPB1, HLA.DQA1, HLA.DQB1, HLA.DRB1) 
-
-GenDX <- GenDX[1:10,]
-Omixon <- Omixon[1:10,]
-# subset data to make testing script faster
+colnames(Omixon) <- gsub("HLA.", "", colnames(Omixon))
+Omixon$Allele <- str_remove_all(Omixon$Allele, "ALLELE_")
 
 GenDX <- separate(GenDX, HLA_A, c("A_1", "A_2"), sep=",")
 GenDX <- separate(GenDX, HLA_B, c("B_1", "B_2"), sep=",")
@@ -117,7 +115,7 @@ while(k<=nrow(P_group)){
 P_group <- filter(P_group, Locus!="null") # removes irrelevant rows
 
 
-# GenDX P group conversion -- [works]
+# GenDX P group conversion
 
 GenDX[is.na(GenDX)]<-""
 
@@ -164,7 +162,7 @@ while (k<=nrow(GenDX)) {
 }
 
 
-# Omixon P group conversion -- [works]
+# Omixon P group conversion
 
 # only comparing the first 2 fields of the data to the p groups to find a match (quicker method)
 k<-1
@@ -174,7 +172,6 @@ while(k<=nrow(Omixon)) {
     if(Omixon[k,i]!=""){
       locus <- str_replace(Omixon[k,i], "HLA-(.*)\\*.*:.*", "\\1");
       allele <- str_replace(Omixon[k,i], ".*\\*([0-9]{2,3}:[0-9]{2,3}).*", "\\1:P"); # add the P to enable search
-      print(locus);
       r <- 1;
       while (r<=nrow(P_group)) {
         if(P_group$Locus[r]==locus & P_group$P_group[r]==allele){
@@ -195,13 +192,14 @@ while (k<=nrow(Omixon)) {
   while (i<=ncol(Omixon)) {
     if(str_detect(Omixon[k,i], ":P$")==FALSE && Omixon[k,i]!=""){
       locus <- str_replace(Omixon[k,i], "HLA-(.*)\\*.*:.*", "\\1");
-      allele <- str_replace(Omixon[k,i], ".*\\*(.*)", "/\\1");
+      allele <- str_replace(Omixon[k,i], ".*\\*([0-9]{2,3}:[0-9]{2,3}).*", "/\\1");
       r<-1;
       while (r<=nrow(P_group)) {
         if(P_group$Locus[r]==locus & str_detect(P_group$Alleles[r], allele)==TRUE){
           Omixon[k,i] <- P_group$P_group[r]}; # will be labeled with P at the end to denote that P group has been identified
         r<-r+1};
     }
+    else if(Omixon[k,i]==""){Omixon[k,i] <- NA}
     else{Omixon[k,i]<-Omixon[k,i]};
     i<-i+1
   };
@@ -209,16 +207,33 @@ while (k<=nrow(Omixon)) {
 }
 
 
-# talk to Gillian about how to handle multiple alleles for same sample ID and lots of blank spaces
-# maybe find all p groups for all data points, then compare between both allele 1 versions for a patient and combine?
-# or compare allele 1 and allele 2 data for the same patient and combine?
+# reformat Omixon data frame so it matches the GenDX data frame
+Omixon <- Omixon[rowSums(is.na(Omixon)) != 8,] # remove empty rows from Omixon
+
+Omixon <- pivot_wider(Omixon, names_from = "Allele", values_from = c("A", "B", "C", "DPA1", "DPB1", "DQA1", "DQB1", "DRB1"))
+
+Omixon2 <- data.frame(matrix(ncol = 17, nrow=0))
+colnames(Omixon2) <- colnames(Omixon)
+
+k<-1
+while (k<=nrow(Omixon)) {
+  i<-1
+  while (i<=ncol(Omixon)) {
+    x <- unlist(Omixon[k,i]);
+    x <- x[!is.na(x)];
+    if (is_empty(x) == FALSE){
+      if (length(unique(x)) == 1){Omixon2[k,i] <- unique(x)}
+      else if(length(unique(x)) > 1){Omixon2[k,i] <- toString(unique(x))}}
+    else if(is_empty(x) == TRUE){Omixon2[k,i] <- ""};
+    i<-i+1
+  };
+  k<-k+1
+}
 
 
-# at the end, after all the P groups have been found, can go through and remove all the ":P" at the end of all the data points
-# keep all :P for now, so at the end we can identify any data points that did not match to a P group at all
 
 
-write.table(Omixon, file="Omixon_Pgroup")
+write.table(Omixon2, file="Omixon_Pgroup")
 write.table(GenDX, file="GenDX_Pgroup")
 
 
