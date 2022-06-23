@@ -118,6 +118,7 @@ P_group <- filter(P_group, Locus!="null") # removes irrelevant rows
 # GenDX P group conversion
 
 GenDX[is.na(GenDX)]<-""
+# empty cells in GenDX represent NA's (meaning there was no data/sample for that patient at that loci)
 
 # only comparing the first two fields of the data points to the P_group column to make the search faster
 # make the loci match so we only search through those p groups
